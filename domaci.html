@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }
+
+        th, td {
+            padding: 8px;
+            text-align: left;
+            white-space: nowrap; /* Dodato kako bi se sprečilo prelamanje teksta */
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        th:not(:last-child),
+        td:not(:last-child) {
+            margin-right: 10px;
+        }
+
+        button {
+            margin-top: 10px;
+            display: inline-block; /* Dodao sam ovu liniju kako bi dugme bilo u liniji sa +/- dugmadima */
+        }
+
+        input[type="number"] {
+            width: 50px;
+            margin-right: 10px;
+        }
+
+        #totalSum {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
+    <title>Dynamic Table</title>
+</head>
+<body>
+    <table id="productTable">
+        <thead>
+            <tr>
+                <th>Naziv</th>
+                <th>Cena</th>
+                <th>Kolicina</th>
+                <th>Ukupna Cena</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    <div>
+        <input type="text" id="itemName" placeholder="Naziv">
+        <input type="number" min="0" id="itemQuantity" placeholder="Kolicina">
+        <input type="number" min="0" id="itemPrice" placeholder="Cena">
+        <button onclick="addItem()">Dodaj proizvod</button>
+    </div>
+    <div id="totalSum"></div>
+    <script>
+        let uniqueIdCounter = 0;
+        document.addEventListener("DOMContentLoaded", function() {
+            const tableBody = document.querySelector("#productTable tbody");
+            const totalSumElement = document.getElementById("totalSum");
+            let items = [
+                { "naziv" : "Chair", "komada": 1, "cena": 233 },
+                { "naziv" : "Car", "komada": 3, "cena": 324 },
+                { "naziv" : "Computer", "komada": 2, "cena": 319 },
+                { "naziv" : "Chair", "komada": 3, "cena": 405 },
+                { "naziv" : "Pizza", "komada": 3, "cena": 121 },
+                { "naziv" : "Chips", "komada": 3, "cena": 58 },
+                { "naziv" : "Table", "komada": 2, "cena": 324 },
+                { "naziv" : "Sausages", "komada": 3, "cena": 204 },
+                { "naziv" : "Pants", "komada": 3, "cena": 335 },
+                { "naziv" : "Table", "komada": 1, "cena": 350 } 
+            ];
+            function generateUniqueId() {
+                uniqueIdCounter++;
+                return uniqueIdCounter;
+            }
+            function renderTable() {
+                tableBody.innerHTML = "";
+
+                items.forEach(item => {
+                    const row = document.createElement("tr");
+                    const uniqueId = generateUniqueId();
+
+                    row.innerHTML = `
+                        <td>${item.naziv}</td>
+                        <td>${item.cena}</td>
+                        <td><input type="number" min="0" value="${item.komada}" id="quantity_${item.naziv}_${uniqueId}" /></td>
+                        
+                        <td id="total_${item.naziv}_${uniqueId}">${item.komada * item.cena}</td>
+                        <td>
+                            <button onclick="updateQuantity('${item.naziv}', 'increment', '${uniqueId}')">+</button>
+                            <button onclick="updateQuantity('${item.naziv}', 'decrement', '${uniqueId}')">-</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+
+                updateTotalSum();
+            }
+
+            window.updateQuantity = function(naziv, action, uniqueId) {
+                const quantityInput = document.getElementById(`quantity_${naziv}_${uniqueId}`);
+                const totalCell = document.getElementById(`total_${naziv}_${uniqueId}`);
+                let quantity = parseInt(quantityInput.value);
+
+                if (action === 'increment') {
+                    quantity++;
+                } else if (action === 'decrement' && quantity > 0) {
+                    quantity--;
+                }
+
+                quantityInput.value = quantity;
+                totalCell.textContent = quantity * getItemByName(naziv).cena;
+
+                updateTotalSum();
+            };
+
+            function getItemByName(naziv) {
+                return items.find(item => item.naziv === naziv);
+            }
+
+
+            window.addItem = function() {
+                const itemName = document.getElementById('itemName').value;
+                const itemQuantity = parseInt(document.getElementById('itemQuantity').value);
+                const itemPrice = parseInt(document.getElementById('itemPrice').value);
+
+                if (itemName && !isNaN(itemQuantity) && !isNaN(itemPrice)) {
+                    const newItem = { "naziv": itemName, "komada": itemQuantity, "cena": itemPrice };
+                    items.push(newItem);
+
+                    renderTable();
+                } else {
+                    alert('Unesite ispravne podatke za dodavanje proizvoda.');
+                }
+            };
+
+            function updateTotalSum() {
+                const totalSum = items.reduce((sum, item) => sum + item.komada * item.cena, 0);
+                totalSumElement.textContent = `Ukupna suma: ${totalSum}`;
+            }
+
+            renderTable();
+        });
+    </script>
+</body>
+</html>
